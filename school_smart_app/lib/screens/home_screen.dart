@@ -6,6 +6,7 @@ import '../constants/app_constants.dart';
 import 'students_screen.dart';
 import 'attendance_screen.dart';
 
+
 class HomeScreen extends StatefulWidget {
   const HomeScreen({Key? key}) : super(key: key);
   
@@ -250,28 +251,29 @@ class _DashboardTabState extends State<DashboardTab> {
             ],
           ),
         ],
-      );
+      ),
+    );
+  }
+  
+  void _navigateToAttendance() {
+    // Navigate to attendance tab
+    final homeScreen = context.findAncestorStateOfType<_HomeScreenState>();
+    if (homeScreen != null) {
+      homeScreen.setState(() {
+        homeScreen._selectedIndex = 2; // Attendance tab index
+      });
     }
-    
-    void _navigateToAttendance() {
-      // Navigate to attendance tab
-      final homeScreen = context.findAncestorStateOfType<_HomeScreenState>();
-      if (homeScreen != null) {
-        homeScreen.setState(() {
-          homeScreen._selectedIndex = 2; // Attendance tab index
-        });
-      }
+  }
+  
+  void _navigateToAddStudent() {
+    // Navigate to students tab
+    final homeScreen = context.findAncestorStateOfType<_HomeScreenState>();
+    if (homeScreen != null) {
+      homeScreen.setState(() {
+        homeScreen._selectedIndex = 1; // Students tab index
+      });
     }
-    
-    void _navigateToAddStudent() {
-      // Navigate to students tab
-      final homeScreen = context.findAncestorStateOfType<_HomeScreenState>();
-      if (homeScreen != null) {
-        homeScreen.setState(() {
-          homeScreen._selectedIndex = 1; // Students tab index
-        });
-      }
-    }
+  }
   
   Widget _buildStatCard(BuildContext context, String title, String value, IconData icon, Color color) {
     return Card(

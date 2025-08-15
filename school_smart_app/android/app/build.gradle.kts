@@ -7,8 +7,8 @@ plugins {
 
 android {
     namespace = "com.example.school_smart_app"
-    compileSdk = flutter.compileSdkVersion
-    ndkVersion = flutter.ndkVersion
+    compileSdk = 36
+    ndkVersion = "29.0.13846066"
 
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_11
@@ -23,9 +23,9 @@ android {
         // TODO: Specify your own unique Application ID (https://developer.android.com/studio/build/application-id.html).
         applicationId = "com.example.school_smart_app"
         // You can update the following values to match your application needs.
-        // For more information, see: https://flutter.dev/to/review-gradle-config.
-        minSdk = flutter.minSdkVersion
-        targetSdk = flutter.targetSdkVersion
+        // For more information, see: https://flutter.dev/to/review/gradle-config.
+        minSdk = 21  // Android 5.0 (Lollipop) - Hỗ trợ thiết bị cũ
+        targetSdk = 36  // Android 16.0 - Mục tiêu hiện tại
         versionCode = flutter.versionCode
         versionName = flutter.versionName
     }
