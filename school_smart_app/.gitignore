@@ -1,27 +1,6 @@
-# Miscellaneous
-*.class
-*.log
-*.pyc
-*.swp
-.DS_Store
-.atom/
-.build/
-.buildlog/
-.history
-.svn/
-.swiftpm/
-migrate_working_dir/
+# Flutter App - .gitignore
 
-# IntelliJ related
-*.iml
-*.ipr
-*.iws
-.idea/
-
-# The .vscode folder contains launch configuration and tasks you configure in
-# VS Code which you may wish to be included in version control, so this line
-# is commented out by default.
-#.vscode/
+# ===== FLUTTER/DART =====
 
 # Flutter/Dart/Pub related
 **/doc/api/
@@ -31,7 +10,9 @@ migrate_working_dir/
 .flutter-plugins-dependencies
 .pub-cache/
 .pub/
-/build/
+**/build/
+**/dist/
+**/web-build/
 
 # Symbolication related
 app.*.symbols
@@ -39,7 +20,168 @@ app.*.symbols
 # Obfuscation related
 app.*.map.json
 
-# Android Studio will place build artifacts here
-/android/app/debug
-/android/app/profile
-/android/app/release
+# Flutter build artifacts
+**/build/
+**/dist/
+**/web-build/
+
+# ===== ANDROID =====
+
+# Flutter Android
+**/android/app/build/
+**/android/build/
+**/android/gradle/
+**/android/local.properties
+**/android/.gradle/
+**/android/.idea/
+**/android/*.iml
+**/android/app/release/
+**/android/app/debug/
+**/android/app/profile/
+**/android/app/src/main/assets/index.android.bundle
+**/android/app/src/main/assets/index.android.bundle.meta
+
+# Android Studio
+**/android/.gradle/
+**/android/captures/
+**/android/gradlew
+**/android/gradlew.bat
+**/android/local.properties
+**/android/**/GeneratedPluginRegistrant.java
+**/android/key.properties
+*.jks
+
+# ===== IOS =====
+
+# Flutter iOS
+**/ios/build/
+**/ios/Pods/
+**/ios/*.xcworkspace/xcuserdata/
+**/ios/*.xcodeproj/xcuserdata/
+**/ios/*.xcodeproj/project.xcworkspace/xcuserdata/
+**/ios/*.xcworkspace/xcshareddata/
+**/ios/*.xcodeproj/project.xcworkspace/xcshareddata/
+
+# iOS specific
+**/ios/Flutter/App.framework
+**/ios/Flutter/Flutter.framework
+**/ios/Flutter/Flutter.podspec
+**/ios/Flutter/Generated.xcconfig
+**/ios/Flutter/ephemeral/
+**/ios/Flutter/app.flx
+**/ios/Flutter/app.zip
+**/ios/Flutter/flutter_assets/
+**/ios/Flutter/flutter_export_environment.sh
+**/ios/ServiceDefinitions.json
+**/ios/Runner/GeneratedPluginRegistrant.*
+
+# ===== FLUTTER DESKTOP PLATFORMS =====
+
+# Windows
+**/windows/flutter/ephemeral/
+**/windows/flutter/generated_plugin_registrant.cc
+**/windows/flutter/generated_plugin_registrant.h
+**/windows/flutter/generated_plugins.cmake
+
+# macOS
+**/macos/flutter/ephemeral/
+**/macos/flutter/GeneratedPluginRegistrant.swift
+**/macos/flutter/Flutter-Debug.xcconfig
+**/macos/flutter/Flutter-Release.xcconfig
+
+# Linux
+**/linux/flutter/ephemeral/
+**/linux/flutter/generated_plugin_registrant.cc
+**/linux/flutter/generated_plugin_registrant.h
+**/linux/flutter/generated_plugins.cmake
+
+# Web
+**/web/firebase_options.dart
+**/web/index.html
+
+# ===== FLUTTER ADDITIONAL =====
+
+# FVM (Flutter Version Management)
+.fvm/
+
+# Flutter IntelliJ Plugin
+.flutter-plugins-dependencies
+
+# Flutter Web
+**/web/firebase_options.dart
+
+# Generated files
+**/generated_plugin_registrant.*
+
+# Flutter analysis
+analysis_options.yaml
+
+# Flutter coverage
+coverage/
+
+# Flutter test
+**/test/coverage/
+
+# Flutter drive
+**/test_driver/
+
+# Flutter integration test
+**/integration_test/
+
+# Flutter web
+**/web/firebase_options.dart
+**/web/index.html
+
+# Flutter desktop
+**/desktop/
+
+# Flutter mobile
+**/mobile/
+
+# ===== IDE & EDITOR =====
+
+# IntelliJ related
+*.iml
+*.ipr
+*.iws
+.idea/
+
+# VS Code
+.vscode/
+
+# ===== OS GENERATED =====
+
+# macOS
+.DS_Store
+*.pem
+
+# Windows
+*.tmp
+*.temp
+*.bak
+*.backup
+ehthumbs.db
+Thumbs.db
+
+# Linux
+*~
+
+# ===== TEMPORARY FILES =====
+*.tmp
+*.temp
+*.bak
+*.backup
+
+# ===== LOGS =====
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+lerna-debug.log*
+
+# ===== ENVIRONMENT =====
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
