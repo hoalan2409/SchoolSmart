@@ -1,104 +1,331 @@
-from typing import List, Optional
 from sqlalchemy.orm import Session
-from app.core.database import get_db
-from app.core.database import Student, FaceEmbedding
+from typing import List, Optional
+from app.core.database import SessionLocal
 from app.models.student import StudentCreate, StudentUpdate, StudentResponse
-from fastapi import Depends, HTTPException, status
-import numpy as np
+from app.core.database import Student as StudentModel
+import logging
+
+logger = logging.getLogger(__name__)
 
 class StudentService:
-    def __init__(self, db: Session = Depends(get_db)):
-        self.db = db
-
-    def get_students(self, skip: int = 0, limit: int = 100) -> List[Student]:
-        """Lấy danh sách học sinh"""
-        return self.db.query(Student).offset(skip).limit(limit).all()
-
-    def get_student(self, student_id: int) -> Optional[Student]:
-        """Lấy thông tin học sinh theo ID"""
-        return self.db.query(Student).filter(Student.id == student_id).first()
-
-    def get_student_by_id(self, student_id: int) -> Optional[Student]:
-        """Lấy thông tin học sinh theo ID (alias cho get_student)"""
-        return self.get_student(student_id)
-
-    def get_student_by_code(self, student_code: str) -> Optional[Student]:
-        """Lấy thông tin học sinh theo mã học sinh"""
-        return self.db.query(Student).filter(Student.student_code == student_code).first()
-
-    def create_student(self, student: StudentCreate) -> Student:
-        """Tạo học sinh mới"""
-        db_student = Student(
-            student_code=student.student_code,
-            full_name=student.full_name,
-            date_of_birth=student.date_of_birth,
-            gender=student.gender,
-            class_name=student.class_name,
-            email=student.email,
-            phone=student.phone,
-            address=student.address
-        )
-        self.db.add(db_student)
-        self.db.commit()
-        self.db.refresh(db_student)
-        return db_student
-
-    def update_student(self, student_id: int, student: StudentUpdate) -> Optional[Student]:
-        """Cập nhật thông tin học sinh"""
-        db_student = self.get_student(student_id)
-        if not db_student:
-            return None
-        
-        update_data = student.dict(exclude_unset=True)
-        for field, value in update_data.items():
-            setattr(db_student, field, value)
-        
-        self.db.commit()
-        self.db.refresh(db_student)
-        return db_student
-
-    def delete_student(self, student_id: int) -> bool:
-        """Xóa học sinh"""
-        db_student = self.get_student(student_id)
-        if not db_student:
-            return False
-        
-        self.db.delete(db_student)
-        self.db.commit()
-        return True
-
-    def search_students(self, query: str) -> List[Student]:
-        """Tìm kiếm học sinh theo tên hoặc mã"""
-        return self.db.query(Student).filter(
-            (Student.full_name.contains(query)) | 
-            (Student.student_code.contains(query))
-        ).all()
-
-    def get_student_face_embeddings(self, student_id: int) -> List[FaceEmbedding]:
-        """Lấy face embeddings của học sinh"""
-        return self.db.query(FaceEmbedding).filter(
-            FaceEmbedding.student_id == student_id
-        ).all()
-
-    def add_face_embedding(self, student_id: int, embedding: np.ndarray, image_path: str) -> FaceEmbedding:
-        """Thêm face embedding cho học sinh"""
-        # Convert numpy array to bytes for storage
-        embedding_bytes = embedding.tobytes()
-        
-        db_embedding = FaceEmbedding(
-            student_id=student_id,
-            embedding=embedding_bytes,
-            image_path=image_path
-        )
-        self.db.add(db_embedding)
-        self.db.commit()
-        self.db.refresh(db_embedding)
-        return db_embedding
-
-    def get_student_count(self) -> int:
-        """Đếm tổng số học sinh"""
-        return self.db.query(Student).count()
-
-    def get_students_by_class(self, class_name: str) -> List[Student]:
-        """Lấy danh sách học sinh theo lớp"""
-        return self.db.query(Student).filter(Student.class_name == class_name).all()
+    """Service class for student management operations"""
+    
+    def __init__(self):
+        pass
+    
+    async def create_student(self, student_data: StudentCreate) -> StudentResponse:
+        """Create a new student"""
+        db = SessionLocal()
+        try:
+            # Check if student with same email already exists
+            existing_student = db.query(StudentModel).filter(
+                StudentModel.email == student_data.email
+            ).first()
+            
+            if existing_student:
+                raise ValueError(f"Student with email '{student_data.email}' already exists")
+            
+            # Create new student
+            db_student = StudentModel(
+                full_name=student_data.full_name,
+                email=student_data.email,
+                grade=student_data.grade,
+                # section=student_data.section, # Removed section
+                date_of_birth=student_data.date_of_birth,
+                phone=student_data.phone,
+                address=student_data.address,
+                parent_name=student_data.parent_name,
+                parent_phone=student_data.parent_phone,
+                parent_email=student_data.parent_email,
+                photo_path=student_data.photo_path,
+            )
+            
+            db.add(db_student)
+            db.commit()
+            db.refresh(db_student)
+            
+            return StudentResponse(
+                id=db_student.id,
+                full_name=db_student.full_name,
+                email=db_student.email,
+                grade=db_student.grade,
+                # section=db_student.section, # Removed section
+                date_of_birth=db_student.date_of_birth,
+                phone=db_student.phone,
+                address=db_student.address,
+                parent_name=db_student.parent_name,
+                parent_phone=db_student.parent_phone,
+                parent_email=db_student.parent_email,
+                photo_path=db_student.photo_path,
+                created_at=db_student.created_at,
+                updated_at=db_student.updated_at,
+            )
+            
+        except Exception as e:
+            db.rollback()
+            logger.error(f"Error creating student: {e}")
+            raise
+        finally:
+            db.close()
+    
+    async def get_students(
+        self, 
+        skip: int = 0, 
+        limit: int = 100,
+        grade: Optional[str] = None,
+        # section: Optional[str] = None, # Removed section parameter
+    ) -> List[StudentResponse]:
+        """Get list of students with pagination and filtering"""
+        db = SessionLocal()
+        try:
+            query = db.query(StudentModel)
+            
+            # Apply filters
+            if grade:
+                query = query.filter(StudentModel.grade == grade)
+            # if section: # Removed section filter
+            #     query = query.filter(StudentModel.section == section)
+            
+            students = query.offset(skip).limit(limit).all()
+            
+            return [
+                StudentResponse(
+                    id=student.id,
+                    full_name=student.full_name,
+                    email=student.email,
+                    grade=student.grade,
+                    # section=student.section, # Removed section
+                    date_of_birth=student.date_of_birth,
+                    phone=student.phone,
+                    address=student.address,
+                    parent_name=student.parent_name,
+                    parent_phone=student.parent_phone,
+                    parent_email=student.parent_email,
+                    photo_path=student.photo_path,
+                    created_at=student.created_at,
+                    updated_at=student.updated_at,
+                )
+                for student in students
+            ]
+            
+        except Exception as e:
+            logger.error(f"Error fetching students: {e}")
+            raise
+        finally:
+            db.close()
+    
+    async def get_student(self, student_id: int) -> Optional[StudentResponse]:
+        """Get student by ID"""
+        db = SessionLocal()
+        try:
+            student = db.query(StudentModel).filter(StudentModel.id == student_id).first()
+            
+            if not student:
+                return None
+            
+            return StudentResponse(
+                id=student.id,
+                full_name=student.full_name,
+                email=student.email,
+                grade=student.grade,
+                # section=student.section, # Removed section
+                date_of_birth=student.date_of_birth,
+                phone=student.phone,
+                address=student.address,
+                parent_name=student.parent_name,
+                parent_phone=student.parent_phone,
+                parent_email=student.parent_email,
+                photo_path=student.photo_path,
+                created_at=student.created_at,
+                updated_at=student.updated_at,
+            )
+            
+        except Exception as e:
+            logger.error(f"Error fetching student {student_id}: {e}")
+            raise
+        finally:
+            db.close()
+    
+    async def update_student(self, student_id: int, student_data: StudentUpdate) -> Optional[StudentResponse]:
+        """Update existing student"""
+        db = SessionLocal()
+        try:
+            student = db.query(StudentModel).filter(StudentModel.id == student_id).first()
+            
+            if not student:
+                return None
+            
+            # Update fields if provided
+            if student_data.full_name is not None:
+                student.full_name = student_data.full_name
+            
+            if student_data.email is not None:
+                # Check if new email conflicts with existing student
+                if student_data.email != student.email:
+                    existing_student = db.query(StudentModel).filter(
+                        StudentModel.email == student_data.email
+                    ).first()
+                    
+                    if existing_student:
+                        raise ValueError(f"Student with email '{student_data.email}' already exists")
+                
+                student.email = student_data.email
+            
+            if student_data.grade is not None:
+                student.grade = student_data.grade
+            
+            # if student_data.section is not None: # Removed section update
+            #     student.section = student_data.section
+            
+            if student_data.date_of_birth is not None:
+                student.date_of_birth = student_data.date_of_birth
+            
+            if student_data.phone is not None:
+                student.phone = student_data.phone
+            
+            if student_data.address is not None:
+                student.address = student_data.address
+            
+            if student_data.parent_name is not None:
+                student.parent_name = student_data.parent_name
+            
+            if student_data.parent_phone is not None:
+                student.parent_phone = student_data.parent_phone
+            
+            if student_data.parent_email is not None:
+                student.parent_email = student_data.parent_email
+            
+            if student_data.photo_path is not None:
+                student.photo_path = student_data.photo_path
+            
+            db.commit()
+            db.refresh(student)
+            
+            return StudentResponse(
+                id=student.id,
+                full_name=student.full_name,
+                email=student.email,
+                grade=student.grade,
+                # section=student.section, # Removed section
+                date_of_birth=student.date_of_birth,
+                phone=student.phone,
+                address=student.address,
+                parent_name=student.parent_name,
+                parent_phone=student.parent_phone,
+                parent_email=student.parent_email,
+                photo_path=student.photo_path,
+                created_at=student.created_at,
+                updated_at=student.updated_at,
+            )
+            
+        except Exception as e:
+            db.rollback()
+            logger.error(f"Error updating student {student_id}: {e}")
+            raise
+        finally:
+            db.close()
+    
+    async def delete_student(self, student_id: int) -> bool:
+        """Delete student (soft delete by setting is_active to False)"""
+        db = SessionLocal()
+        try:
+            student = db.query(StudentModel).filter(StudentModel.id == student_id).first()
+            
+            if not student:
+                return False
+            
+            # Soft delete
+            student.is_active = False
+            db.commit()
+            
+            return True
+            
+        except Exception as e:
+            db.rollback()
+            logger.error(f"Error deleting student {student_id}: {e}")
+            raise
+        finally:
+            db.close()
+    
+    async def update_student_photo(self, student_id: int, photo_path: str) -> Optional[StudentResponse]:
+        """Update student's photo path"""
+        db = SessionLocal()
+        try:
+            student = db.query(StudentModel).filter(StudentModel.id == student_id).first()
+            
+            if not student:
+                return None
+            
+            student.photo_path = photo_path
+            db.commit()
+            db.refresh(student)
+            
+            return StudentResponse(
+                id=student.id,
+                full_name=student.full_name,
+                email=student.email,
+                grade=student.grade,
+                # section=student.section, # Removed section
+                date_of_birth=student.date_of_birth,
+                phone=student.phone,
+                address=student.address,
+                parent_name=student.parent_name,
+                parent_phone=student.parent_phone,
+                parent_email=student.parent_email,
+                photo_path=student.photo_path,
+                created_at=student.created_at,
+                updated_at=student.updated_at,
+            )
+            
+        except Exception as e:
+            db.rollback()
+            logger.error(f"Error updating student photo {student_id}: {e}")
+            raise
+        finally:
+            db.close()
+    
+    async def get_students_by_grade(self, grade: str) -> List[StudentResponse]:
+        """Get students by grade"""
+        db = SessionLocal()
+        try:
+            students = db.query(StudentModel).filter(
+                StudentModel.grade == grade,
+                StudentModel.is_active == True
+            ).all()
+            
+            return [
+                StudentResponse(
+                    id=student.id,
+                    full_name=student.full_name,
+                    email=student.email,
+                    grade=student.grade,
+                    # section=student.section, # Removed section
+                    date_of_birth=student.date_of_birth,
+                    phone=student.phone,
+                    address=student.address,
+                    parent_name=student.parent_name,
+                    parent_phone=student.parent_phone,
+                    parent_email=student.parent_email,
+                    photo_path=student.photo_path,
+                    created_at=student.created_at,
+                    updated_at=student.updated_at,
+                )
+                for student in students
+            ]
+            
+        except Exception as e:
+            logger.error(f"Error fetching students by grade '{grade}': {e}")
+            raise
+        finally:
+            db.close()
+    
+    async def get_active_students_count(self) -> int:
+        """Get count of active students"""
+        db = SessionLocal()
+        try:
+            return db.query(StudentModel).filter(StudentModel.is_active == True).count()
+        except Exception as e:
+            logger.error(f"Error counting active students: {e}")
+            raise
+        finally:
+            db.close()

@@ -10,12 +10,14 @@ class AttendanceScreen extends StatefulWidget {
 }
 
 class _AttendanceScreenState extends State<AttendanceScreen> {
-  DateTime _selectedDate = DateTime.now();
   String? _selectedGrade;
-  String? _selectedSection;
-  
+  DateTime _selectedDate = DateTime.now();
+  List<Student> _filteredStudents = [];
+  bool _isLoading = false;
+  String? _error;
+
   final List<String> _grades = ['Grade 1', 'Grade 2', 'Grade 3', 'Grade 4', 'Grade 5', 'Grade 6', 'Grade 7', 'Grade 8', 'Grade 9', 'Grade 10', 'Grade 11', 'Grade 12'];
-  final List<String> _sections = ['A', 'B', 'C', 'D', 'E'];
+
   
   // Mock data - replace with actual data from database
   List<Student> _students = [
@@ -24,7 +26,6 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
       name: 'Nguyễn Văn A',
       email: 'nguyenvana@example.com',
       grade: 'Grade 10',
-      section: 'A',
       createdAt: DateTime.now(),
     ),
     Student(
@@ -32,7 +33,6 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
       name: 'Trần Thị B',
       email: 'tranthib@example.com',
       grade: 'Grade 10',
-      section: 'A',
       createdAt: DateTime.now(),
     ),
     Student(
@@ -40,7 +40,6 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
       name: 'Lê Văn C',
       email: 'levanc@example.com',
       grade: 'Grade 10',
-      section: 'A',
       createdAt: DateTime.now(),
     ),
     Student(
@@ -48,7 +47,6 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
       name: 'Phạm Thị D',
       email: 'phamthid@example.com',
       grade: 'Grade 10',
-      section: 'A',
       createdAt: DateTime.now(),
     ),
     Student(
@@ -56,27 +54,54 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
       name: 'Hoàng Văn E',
       email: 'hoangvane@example.com',
       grade: 'Grade 10',
-      section: 'A',
       createdAt: DateTime.now(),
     ),
   ];
   
   final Map<int, bool> _attendanceMap = {};
-  bool _isLoading = false;
   
   @override
   void initState() {
     super.initState();
     _selectedGrade = _grades[9]; // Grade 10
-    _selectedSection = _sections[0]; // Section A
-    _initializeAttendance();
+    _filterStudents();
   }
   
   void _initializeAttendance() {
     _attendanceMap.clear();
-    for (var student in _students) {
+    for (var student in _filteredStudents) {
       _attendanceMap[student.id] = true; // Default to present
     }
+  }
+
+  void _loadStudents() {
+    setState(() {
+      _filteredStudents = _students;
+    });
+  }
+
+  void _filterStudents() {
+    setState(() {
+      _filteredStudents = _students.where((student) {
+        bool gradeMatch = _selectedGrade == null || student.grade == _selectedGrade;
+        return gradeMatch;
+      }).toList();
+      _initializeAttendance();
+    });
+  }
+
+  void _onGradeChanged(String? newGrade) {
+    setState(() {
+      _selectedGrade = newGrade;
+      _filterStudents();
+    });
+  }
+
+  void _onDateChanged(DateTime newDate) {
+    setState(() {
+      _selectedDate = newDate;
+      _filterStudents();
+    });
   }
   
   @override
@@ -179,28 +204,7 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
                 ),
               ),
               SizedBox(width: 16),
-              Expanded(
-                child: DropdownButtonFormField<String>(
-                  value: _selectedSection,
-                  decoration: InputDecoration(
-                    labelText: 'Section',
-                    border: OutlineInputBorder(),
-                    contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                  ),
-                  items: _sections.map((String section) {
-                    return DropdownMenuItem<String>(
-                      value: section,
-                      child: Text(section),
-                    );
-                  }).toList(),
-                  onChanged: (String? newValue) {
-                    setState(() {
-                      _selectedSection = newValue;
-                      _filterStudents();
-                    });
-                  },
-                ),
-              ),
+              // Removed Section Dropdown - section field no longer exists
             ],
           ),
         ],
@@ -289,7 +293,7 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
   }
   
   Widget _buildStudentsList() {
-    if (_students.isEmpty) {
+    if (_filteredStudents.isEmpty) {
       return Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -317,9 +321,9 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
     
     return ListView.builder(
       padding: EdgeInsets.all(16),
-      itemCount: _students.length,
+      itemCount: _filteredStudents.length,
       itemBuilder: (context, index) {
-        final student = _students[index];
+        final student = _filteredStudents[index];
         final isPresent = _attendanceMap[student.id] ?? true;
         
         return Card(
@@ -337,7 +341,7 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
               style: TextStyle(fontWeight: FontWeight.w500),
             ),
             subtitle: Text(
-              '${student.grade} - Section ${student.section}',
+              '${student.grade}',
               style: TextStyle(fontSize: 12),
             ),
             trailing: Row(
@@ -393,56 +397,6 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
   void _toggleAttendance(int studentId, bool isPresent) {
     setState(() {
       _attendanceMap[studentId] = isPresent;
-    });
-  }
-  
-  void _filterStudents() {
-    // TODO: Implement actual filtering from database
-    // For now, just update the mock data based on selection
-    setState(() {
-      _students = [
-        Student(
-          id: 1,
-          name: 'Nguyễn Văn A',
-          email: 'nguyenvana@example.com',
-          grade: _selectedGrade,
-          section: _selectedSection,
-          createdAt: DateTime.now(),
-        ),
-        Student(
-          id: 2,
-          name: 'Trần Thị B',
-          email: 'tranthib@example.com',
-          grade: _selectedGrade,
-          section: _selectedSection,
-          createdAt: DateTime.now(),
-        ),
-        Student(
-          id: 3,
-          name: 'Lê Văn C',
-          email: 'levanc@example.com',
-          grade: _selectedGrade,
-          section: _selectedSection,
-          createdAt: DateTime.now(),
-        ),
-        Student(
-          id: 4,
-          name: 'Phạm Thị D',
-          email: 'phamthid@example.com',
-          grade: _selectedGrade,
-          section: _selectedSection,
-          createdAt: DateTime.now(),
-        ),
-        Student(
-          id: 5,
-          name: 'Hoàng Văn E',
-          email: 'hoangvane@example.com',
-          grade: _selectedGrade,
-          section: _selectedSection,
-          createdAt: DateTime.now(),
-        ),
-      ];
-      _initializeAttendance();
     });
   }
   

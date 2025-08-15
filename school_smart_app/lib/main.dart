@@ -6,6 +6,7 @@ import 'providers/students_provider.dart';
 import 'screens/login_screen.dart';
 import 'screens/home_screen.dart';
 import 'constants/app_constants.dart';
+import 'services/api_service.dart';
 
 void main() {
   runApp(MyApp());
@@ -14,6 +15,9 @@ void main() {
 class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
+    // Initialize API service
+    ApiService.initialize();
+    
     return MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (_) => AuthProvider()),

@@ -1,0 +1,19 @@
+# Advanced ML Packages (cài đặt riêng nếu cần)
+# Lưu ý: Các packages này có thể khó cài đặt trên Windows
+
+# Face Recognition
+dlib==19.24.2
+insightface==0.7.3
+
+# Deep Learning
+tensorflow==2.14.0
+onnxruntime-gpu==1.16.3
+
+# Advanced ML
+scikit-learn==1.3.2
+
+# OpenCV với contrib modules
+opencv-contrib-python==4.8.1.78
+
+# Cài đặt: pip install -r requirements-ml.txt
+# Hoặc cài từng package: pip install dlib insightface tensorflow

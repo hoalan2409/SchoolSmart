@@ -36,6 +36,12 @@ SchoolSmart là hệ thống điểm danh tự động sử dụng AI nhận di�
 
 ### Backend Setup (Windows)
 
+#### Requirements Files
+- **`requirements.txt`**: Core packages cần thiết để chạy backend
+- **`requirements-ml.txt`**: ML packages nâng cao (tùy chọn)
+
+**Khuyến nghị**: Bắt đầu với `requirements.txt` trước, sau đó cài ML packages nếu cần.
+
 #### Giải pháp 1 – Cài Visual Studio Build Tools (build từ source)
 
 **Bước 1: Cài Visual Studio Build Tools**
@@ -58,17 +64,11 @@ python -m venv venv
 # Kích hoạt virtual environment
 venv\Scripts\activate
 
-# Cài cmake và boost trước
-pip install cmake boost
+# Cài core packages (khuyến nghị)
+pip install -r requirements.txt
 
-# Cài dlib (cần Visual Studio Build Tools)
-pip install dlib
-
-# Cài insightface
-pip install insightface
-
-# Cài các package còn lại
-pip install -r requirements-others.txt
+# Nếu cần ML packages nâng cao (tùy chọn)
+pip install -r requirements-ml.txt
 ```
 
 **Bước 3: Chạy backend**
@@ -93,7 +93,7 @@ conda install -c conda-forge dlib
 conda install -c conda-forge insightface
 
 # Cài các package còn lại
-pip install -r requirements-others.txt
+pip install -r requirements.txt
 ```
 
 ### Frontend Setup (Flutter)

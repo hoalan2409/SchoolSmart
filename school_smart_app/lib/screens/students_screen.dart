@@ -12,11 +12,11 @@ class StudentsScreen extends StatefulWidget {
 class _StudentsScreenState extends State<StudentsScreen> {
   final TextEditingController _searchController = TextEditingController();
   String? _selectedGrade;
-  String? _selectedSection;
+  // String? _selectedSection; // Removed section field
   String _searchQuery = '';
   
   final List<String> _grades = ['All Grades', 'Grade 1', 'Grade 2', 'Grade 3', 'Grade 4', 'Grade 5', 'Grade 6', 'Grade 7', 'Grade 8', 'Grade 9', 'Grade 10', 'Grade 11', 'Grade 12'];
-  final List<String> _sections = ['All Sections', 'A', 'B', 'C', 'D', 'E'];
+
   
   // Mock data - replace with actual data from database
   List<Student> _allStudents = [
@@ -25,7 +25,6 @@ class _StudentsScreenState extends State<StudentsScreen> {
       name: 'Nguyễn Văn A',
       email: 'nguyenvana@example.com',
       grade: 'Grade 10',
-      section: 'A',
       phoneNumber: '0123456789',
       createdAt: DateTime.now(),
     ),
@@ -34,7 +33,6 @@ class _StudentsScreenState extends State<StudentsScreen> {
       name: 'Trần Thị B',
       email: 'tranthib@example.com',
       grade: 'Grade 10',
-      section: 'A',
       phoneNumber: '0123456790',
       createdAt: DateTime.now(),
     ),
@@ -43,7 +41,6 @@ class _StudentsScreenState extends State<StudentsScreen> {
       name: 'Lê Văn C',
       email: 'levanc@example.com',
       grade: 'Grade 10',
-      section: 'B',
       phoneNumber: '0123456791',
       createdAt: DateTime.now(),
     ),
@@ -52,7 +49,6 @@ class _StudentsScreenState extends State<StudentsScreen> {
       name: 'Phạm Thị D',
       email: 'phamthid@example.com',
       grade: 'Grade 11',
-      section: 'A',
       phoneNumber: '0123456792',
       createdAt: DateTime.now(),
     ),
@@ -61,7 +57,6 @@ class _StudentsScreenState extends State<StudentsScreen> {
       name: 'Hoàng Văn E',
       email: 'hoangvane@example.com',
       grade: 'Grade 11',
-      section: 'B',
       phoneNumber: '0123456793',
       createdAt: DateTime.now(),
     ),
@@ -70,7 +65,6 @@ class _StudentsScreenState extends State<StudentsScreen> {
       name: 'Vũ Thị F',
       email: 'vuthif@example.com',
       grade: 'Grade 9',
-      section: 'A',
       phoneNumber: '0123456794',
       createdAt: DateTime.now(),
     ),
@@ -82,7 +76,7 @@ class _StudentsScreenState extends State<StudentsScreen> {
   void initState() {
     super.initState();
     _selectedGrade = _grades[0]; // All Grades
-    _selectedSection = _sections[0]; // All Sections
+
     _filteredStudents = List.from(_allStudents);
   }
   
@@ -184,28 +178,7 @@ class _StudentsScreenState extends State<StudentsScreen> {
                 ),
               ),
               SizedBox(width: 16),
-              Expanded(
-                child: DropdownButtonFormField<String>(
-                  value: _selectedSection,
-                  decoration: InputDecoration(
-                    labelText: 'Section',
-                    border: OutlineInputBorder(),
-                    contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                  ),
-                  items: _sections.map((String section) {
-                    return DropdownMenuItem<String>(
-                      value: section,
-                      child: Text(section),
-                    );
-                  }).toList(),
-                  onChanged: (String? newValue) {
-                    setState(() {
-                      _selectedSection = newValue;
-                      _filterStudents();
-                    });
-                  },
-                ),
-              ),
+              // Removed Section Dropdown
             ],
           ),
         ],
@@ -300,7 +273,7 @@ class _StudentsScreenState extends State<StudentsScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  '${student.grade} - Section ${student.section}',
+                  '${student.grade}',
                   style: TextStyle(fontSize: 12),
                 ),
                 if (student.phoneNumber != null)
@@ -371,20 +344,30 @@ class _StudentsScreenState extends State<StudentsScreen> {
     setState(() {
       _filteredStudents = _allStudents.where((student) {
         // Search filter
-        bool matchesSearch = _searchQuery.isEmpty ||
+        bool matchesSearch = _searchQuery.isEmpty || 
             student.name.toLowerCase().contains(_searchQuery.toLowerCase()) ||
             student.email.toLowerCase().contains(_searchQuery.toLowerCase());
         
         // Grade filter
-        bool matchesGrade = _selectedGrade == 'All Grades' ||
+        bool matchesGrade = _selectedGrade == 'All Grades' || 
             student.grade == _selectedGrade;
         
-        // Section filter
-        bool matchesSection = _selectedSection == 'All Sections' ||
-            student.section == _selectedSection;
-        
-        return matchesSearch && matchesGrade && matchesSection;
+        return matchesSearch && matchesGrade;
       }).toList();
+    });
+  }
+
+  void _onGradeChanged(String? newGrade) {
+    setState(() {
+      _selectedGrade = newGrade;
+      _filterStudents();
+    });
+  }
+
+  void _onSearchChanged(String query) {
+    setState(() {
+      _searchQuery = query;
+      _filterStudents();
     });
   }
   
@@ -424,7 +407,7 @@ class _StudentsScreenState extends State<StudentsScreen> {
               _buildDetailRow('Name', student.name),
               _buildDetailRow('Email', student.email),
               _buildDetailRow('Grade', student.grade ?? 'N/A'),
-              _buildDetailRow('Section', student.section ?? 'N/A'),
+              // _buildDetailRow('Section', student.section ?? 'N/A'), // Removed section detail
               _buildDetailRow('Phone', student.phoneNumber ?? 'N/A'),
               _buildDetailRow('Address', student.address ?? 'N/A'),
               _buildDetailRow('Date of Birth', student.dateOfBirth != null 
@@ -433,8 +416,8 @@ class _StudentsScreenState extends State<StudentsScreen> {
               _buildDetailRow('Parent Name', student.parentName ?? 'N/A'),
               _buildDetailRow('Parent Phone', student.parentPhone ?? 'N/A'),
               _buildDetailRow('Parent Email', student.parentEmail ?? 'N/A'),
-              _buildDetailRow('Status', student.isActive ? 'Active' : 'Inactive'),
-              _buildDetailRow('Created', '${student.createdAt.day}/${student.createdAt.month}/${student.createdAt.year}'),
+              // _buildDetailRow('Status', student.isActive ? 'Active' : 'Inactive'), // Removed isActive reference
+              _buildDetailRow('Created', student.createdAt.toString().split(' ')[0]),
             ],
           ),
         ),

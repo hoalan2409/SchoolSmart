@@ -2,10 +2,15 @@ from datetime import datetime, timedelta
 from typing import Optional, Union
 from jose import JWTError, jwt
 from passlib.context import CryptContext
+from fastapi import HTTPException, Depends, status
+from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from app.core.config import settings
 import logging
 
 logger = logging.getLogger(__name__)
+
+# Security
+security = HTTPBearer()
 
 # Password hashing
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
@@ -49,6 +54,18 @@ def verify_token(token: str) -> dict:
     except JWTError as e:
         logger.error(f"Token verification failed: {e}")
         raise JWTError("Invalid token")
+
+async def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(security)) -> dict:
+    """Xác thực user từ JWT token"""
+    try:
+        payload = verify_token(credentials.credentials)
+        return payload
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid authentication credentials",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
 
 def get_token_expiration(token: str) -> Optional[datetime]:
     """Lấy thời gian hết hạn của token"""
@@ -104,7 +121,7 @@ def sanitize_input(input_string: str) -> str:
 def validate_email(email: str) -> bool:
     """Validate email format"""
     import re
-    pattern = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
+    pattern = r'^[a-zA-Z0-9._%+-]+@([\w-]+\.)+[\w-]{2,4}$'
     return re.match(pattern, email) is not None
 
 def validate_phone(phone: str) -> bool:

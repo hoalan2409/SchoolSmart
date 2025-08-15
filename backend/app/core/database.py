@@ -1,4 +1,4 @@
-from sqlalchemy import create_engine, Column, Integer, String, DateTime, Boolean, Text, Float, ForeignKey
+from sqlalchemy import create_engine, Column, Integer, String, DateTime, Boolean, Text, Float, ForeignKey, JSON, Date
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker, relationship
 from sqlalchemy.sql import func
@@ -36,24 +36,39 @@ class User(Base):
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
 
+class Grade(Base):
+    __tablename__ = "grades"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String, unique=True, index=True, nullable=False)
+    description = Column(Text, nullable=True)
+    is_active = Column(Boolean, default=True)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    updated_at = Column(DateTime(timezone=True), onupdate=func.now())
+
 class Student(Base):
     """Model cho học sinh"""
     __tablename__ = "students"
     
     id = Column(Integer, primary_key=True, index=True)
-    student_code = Column(String(20), unique=True, index=True, nullable=False)
-    full_name = Column(String(100), nullable=False)
-    date_of_birth = Column(DateTime, nullable=True)
-    gender = Column(String(10), nullable=True)  # male, female, other
-    class_name = Column(String(50), nullable=True)
-    grade = Column(String(20), nullable=True)
-    parent_phone = Column(String(20), nullable=True)
-    parent_email = Column(String(100), nullable=True)
+    full_name = Column(String, nullable=False, index=True)
+    email = Column(String, unique=True, nullable=False, index=True)
+    grade = Column(String, nullable=False, index=True)
+    # section = Column(String, nullable=False, index=True) # Removed section field
+    date_of_birth = Column(Date, nullable=True)
+    phone = Column(String, nullable=True)
+    address = Column(Text, nullable=True)
+    parent_name = Column(String, nullable=True)
+    parent_phone = Column(String, nullable=True)
+    parent_email = Column(String, nullable=True)
+    photo_path = Column(String, nullable=True)  # Path to photo for ML
     is_active = Column(Boolean, default=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
     
     # Relationships
+    # Note: grade field is String, not ForeignKey, so no direct relationship
+    # grade_rel = relationship("Grade", back_populates="students")
     face_embeddings = relationship("FaceEmbedding", back_populates="student")
     attendance_records = relationship("AttendanceRecord", back_populates="student")
 
