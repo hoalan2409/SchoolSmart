@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../models/student.dart';
 import '../models/attendance.dart';
+import '../models/grade.dart'; // Add Grade model import
 import '../services/api_service.dart';
 
 class AttendanceScreen extends StatefulWidget {
@@ -17,8 +18,9 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
   bool _isLoading = false;
   String? _error;
 
-  final List<String> _grades = ['Grade 1', 'Grade 2', 'Grade 3', 'Grade 4', 'Grade 5', 'Grade 6', 'Grade 7', 'Grade 8', 'Grade 9', 'Grade 10', 'Grade 11', 'Grade 12'];
-
+  // Replace hardcoded grades with dynamic list from database
+  List<Grade> _availableGrades = [];
+  bool _isLoadingGrades = true;
   
   // Real data from API
   List<Student> _students = [];
@@ -28,8 +30,32 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
   @override
   void initState() {
     super.initState();
-    _selectedGrade = _grades[9]; // Grade 10
+    _loadGrades(); // Load grades first
     _loadStudents();
+  }
+  
+  // Load grades from database
+  Future<void> _loadGrades() async {
+    try {
+      setState(() {
+        _isLoadingGrades = true;
+      });
+      
+      final grades = await ApiService.getGrades(activeOnly: true);
+      setState(() {
+        _availableGrades = grades;
+        _isLoadingGrades = false;
+        // Set default selection to first grade if available
+        if (grades.isNotEmpty) {
+          _selectedGrade = grades.first.name;
+        }
+      });
+    } catch (e) {
+      setState(() {
+        _isLoadingGrades = false;
+        _error = 'Failed to load grades: $e';
+      });
+    }
   }
   
   void _initializeAttendance() {
@@ -172,26 +198,7 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
           Row(
             children: [
               Expanded(
-                child: DropdownButtonFormField<String>(
-                  value: _selectedGrade,
-                  decoration: InputDecoration(
-                    labelText: 'Grade',
-                    border: OutlineInputBorder(),
-                    contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                  ),
-                  items: _grades.map((String grade) {
-                    return DropdownMenuItem<String>(
-                      value: grade,
-                      child: Text(grade),
-                    );
-                  }).toList(),
-                  onChanged: (String? newValue) {
-                    setState(() {
-                      _selectedGrade = newValue;
-                      _filterStudents();
-                    });
-                  },
-                ),
+                child: _buildGradeFilter(),
               ),
               SizedBox(width: 16),
               // Removed Section Dropdown - section field no longer exists
@@ -199,6 +206,24 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
           ),
         ],
       ),
+    );
+  }
+  
+  Widget _buildGradeFilter() {
+    return DropdownButtonFormField<String>(
+      value: _selectedGrade,
+      decoration: InputDecoration(
+        labelText: 'Grade',
+        border: OutlineInputBorder(),
+        contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      ),
+      items: _availableGrades.map((Grade grade) {
+        return DropdownMenuItem<String>(
+          value: grade.name,
+          child: Text(grade.name),
+        );
+      }).toList(),
+      onChanged: _onGradeChanged,
     );
   }
   

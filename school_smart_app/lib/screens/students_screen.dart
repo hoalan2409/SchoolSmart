@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../models/student.dart';
+import '../models/grade.dart'; // Add Grade model import
 import '../services/api_service.dart';
 import 'add_student_screen.dart';
 
@@ -16,8 +17,10 @@ class _StudentsScreenState extends State<StudentsScreen> {
   // String? _selectedSection; // Removed section field
   String _searchQuery = '';
   
-  final List<String> _grades = ['All Grades', 'Grade 1', 'Grade 2', 'Grade 3', 'Grade 4', 'Grade 5', 'Grade 6', 'Grade 7', 'Grade 8', 'Grade 9', 'Grade 10', 'Grade 11', 'Grade 12'];
-
+  // Replace hardcoded grades with dynamic list from database
+  List<Grade> _availableGrades = [];
+  bool _isLoadingGrades = true;
+  
   bool _isLoading = false;
   String? _error;
 
@@ -30,7 +33,7 @@ class _StudentsScreenState extends State<StudentsScreen> {
   @override
   void initState() {
     super.initState();
-    _selectedGrade = _grades[0]; // All Grades
+    _loadGrades(); // Load grades first
     _loadStudents();
   }
   
@@ -38,6 +41,28 @@ class _StudentsScreenState extends State<StudentsScreen> {
   void dispose() {
     _searchController.dispose();
     super.dispose();
+  }
+  
+  // Load grades from database
+  Future<void> _loadGrades() async {
+    try {
+      setState(() {
+        _isLoadingGrades = true;
+      });
+      
+      final grades = await ApiService.getGrades(activeOnly: true);
+      setState(() {
+        _availableGrades = grades;
+        _isLoadingGrades = false;
+        // Set default selection to "All Grades"
+        _selectedGrade = null;
+      });
+    } catch (e) {
+      setState(() {
+        _isLoadingGrades = false;
+        _error = 'Failed to load grades: $e';
+      });
+    }
   }
   
   @override
@@ -106,7 +131,7 @@ class _StudentsScreenState extends State<StudentsScreen> {
           
           SizedBox(height: 16),
           
-          // Grade and Section Filters
+          // Grade Filter (now dynamic from database)
           Row(
             children: [
               Expanded(
@@ -117,12 +142,20 @@ class _StudentsScreenState extends State<StudentsScreen> {
                     border: OutlineInputBorder(),
                     contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                   ),
-                  items: _grades.map((String grade) {
-                    return DropdownMenuItem<String>(
-                      value: grade,
-                      child: Text(grade),
-                    );
-                  }).toList(),
+                  items: [
+                    // Add "All Grades" option
+                    DropdownMenuItem<String>(
+                      value: null,
+                      child: Text('All Grades'),
+                    ),
+                    // Add grades from database
+                    ..._availableGrades.map((Grade grade) {
+                      return DropdownMenuItem<String>(
+                        value: grade.name,
+                        child: Text(grade.name),
+                      );
+                    }).toList(),
+                  ],
                   onChanged: (String? newValue) {
                     setState(() {
                       _selectedGrade = newValue;
@@ -348,18 +381,19 @@ class _StudentsScreenState extends State<StudentsScreen> {
   
   void _filterStudents() {
     setState(() {
-      _filteredStudents = _allStudents.where((student) {
-        // Search filter
-        bool matchesSearch = _searchQuery.isEmpty || 
-            student.name.toLowerCase().contains(_searchQuery.toLowerCase()) ||
-            (student.email?.toLowerCase().contains(_searchQuery.toLowerCase()) ?? false);
-        
-        // Grade filter
-        bool matchesGrade = _selectedGrade == 'All Grades' || 
-            student.grade == _selectedGrade;
-        
-        return matchesSearch && matchesGrade;
-      }).toList();
+      if (_searchQuery.isEmpty && _selectedGrade == null) {
+        _filteredStudents = _allStudents;
+      } else {
+        _filteredStudents = _allStudents.where((student) {
+          bool matchesSearch = _searchQuery.isEmpty ||
+              student.name.toLowerCase().contains(_searchQuery.toLowerCase()) ||
+              (student.email?.toLowerCase().contains(_searchQuery.toLowerCase()) ?? false);
+          
+          bool matchesGrade = _selectedGrade == null || student.grade == _selectedGrade;
+          
+          return matchesSearch && matchesGrade;
+        }).toList();
+      }
     });
   }
 
