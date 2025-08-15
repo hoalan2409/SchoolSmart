@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../models/student.dart';
+import '../services/api_service.dart';
 import 'add_student_screen.dart';
 
 class StudentsScreen extends StatefulWidget {
@@ -17,58 +18,12 @@ class _StudentsScreenState extends State<StudentsScreen> {
   
   final List<String> _grades = ['All Grades', 'Grade 1', 'Grade 2', 'Grade 3', 'Grade 4', 'Grade 5', 'Grade 6', 'Grade 7', 'Grade 8', 'Grade 9', 'Grade 10', 'Grade 11', 'Grade 12'];
 
+  bool _isLoading = false;
+  String? _error;
+
   
-  // Mock data - replace with actual data from database
-  List<Student> _allStudents = [
-    Student(
-      id: 1,
-      name: 'Nguyễn Văn A',
-      email: 'nguyenvana@example.com',
-      grade: 'Grade 10',
-      phoneNumber: '0123456789',
-      createdAt: DateTime.now(),
-    ),
-    Student(
-      id: 2,
-      name: 'Trần Thị B',
-      email: 'tranthib@example.com',
-      grade: 'Grade 10',
-      phoneNumber: '0123456790',
-      createdAt: DateTime.now(),
-    ),
-    Student(
-      id: 3,
-      name: 'Lê Văn C',
-      email: 'levanc@example.com',
-      grade: 'Grade 10',
-      phoneNumber: '0123456791',
-      createdAt: DateTime.now(),
-    ),
-    Student(
-      id: 4,
-      name: 'Phạm Thị D',
-      email: 'phamthid@example.com',
-      grade: 'Grade 11',
-      phoneNumber: '0123456792',
-      createdAt: DateTime.now(),
-    ),
-    Student(
-      id: 5,
-      name: 'Hoàng Văn E',
-      email: 'hoangvane@example.com',
-      grade: 'Grade 11',
-      phoneNumber: '0123456793',
-      createdAt: DateTime.now(),
-    ),
-    Student(
-      id: 6,
-      name: 'Vũ Thị F',
-      email: 'vuthif@example.com',
-      grade: 'Grade 9',
-      phoneNumber: '0123456794',
-      createdAt: DateTime.now(),
-    ),
-  ];
+  // Real data from API
+  List<Student> _allStudents = [];
   
   List<Student> _filteredStudents = [];
   
@@ -76,8 +31,7 @@ class _StudentsScreenState extends State<StudentsScreen> {
   void initState() {
     super.initState();
     _selectedGrade = _grades[0]; // All Grades
-
-    _filteredStudents = List.from(_allStudents);
+    _loadStudents();
   }
   
   @override
@@ -201,20 +155,72 @@ class _StudentsScreenState extends State<StudentsScreen> {
             ),
           ),
           Spacer(),
-          TextButton.icon(
-            onPressed: _filterStudents,
-            icon: Icon(Icons.refresh, size: 16),
-            label: Text('Refresh'),
-            style: TextButton.styleFrom(
-              foregroundColor: Theme.of(context).primaryColor,
-            ),
-          ),
+                     TextButton.icon(
+             onPressed: _loadStudents,
+             icon: Icon(Icons.refresh, size: 16),
+             label: Text('Refresh'),
+             style: TextButton.styleFrom(
+               foregroundColor: Theme.of(context).primaryColor,
+             ),
+           ),
         ],
       ),
     );
   }
   
   Widget _buildStudentsList() {
+    if (_isLoading) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            CircularProgressIndicator(),
+            SizedBox(height: 16),
+            Text(
+              'Loading students...',
+              style: TextStyle(
+                fontSize: 16,
+                color: Colors.grey[600],
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    if (_error != null) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.error_outline, size: 64, color: Colors.red[400]),
+            SizedBox(height: 16),
+            Text(
+              'Error loading students',
+              style: TextStyle(
+                fontSize: 18,
+                color: Colors.red[600],
+              ),
+            ),
+            Text(
+              _error!,
+              style: TextStyle(
+                fontSize: 14,
+                color: Colors.grey[500],
+              ),
+              textAlign: TextAlign.center,
+            ),
+            SizedBox(height: 16),
+            ElevatedButton.icon(
+              onPressed: _loadStudents,
+              icon: Icon(Icons.refresh),
+              label: Text('Retry'),
+            ),
+          ],
+        ),
+      );
+    }
+
     if (_filteredStudents.isEmpty) {
       return Center(
         child: Column(
@@ -346,7 +352,7 @@ class _StudentsScreenState extends State<StudentsScreen> {
         // Search filter
         bool matchesSearch = _searchQuery.isEmpty || 
             student.name.toLowerCase().contains(_searchQuery.toLowerCase()) ||
-            student.email.toLowerCase().contains(_searchQuery.toLowerCase());
+            (student.email?.toLowerCase().contains(_searchQuery.toLowerCase()) ?? false);
         
         // Grade filter
         bool matchesGrade = _selectedGrade == 'All Grades' || 
@@ -370,6 +376,36 @@ class _StudentsScreenState extends State<StudentsScreen> {
       _filterStudents();
     });
   }
+
+  Future<void> _loadStudents() async {
+    setState(() {
+      _isLoading = true;
+      _error = null;
+    });
+
+    try {
+      final students = await ApiService.getStudents();
+      setState(() {
+        _allStudents = students;
+        _filteredStudents = List.from(students);
+        _isLoading = false;
+      });
+    } catch (e) {
+      setState(() {
+        _error = e.toString();
+        _isLoading = false;
+      });
+      
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error loading students: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
   
   void _addNewStudent() async {
     final result = await Navigator.push(
@@ -378,10 +414,8 @@ class _StudentsScreenState extends State<StudentsScreen> {
     );
     
     if (result != null && result is Student && mounted) {
-      setState(() {
-        _allStudents.add(result);
-        _filterStudents();
-      });
+      // Refresh data from API instead of just adding to local list
+      await _loadStudents();
       
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -404,8 +438,9 @@ class _StudentsScreenState extends State<StudentsScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisSize: MainAxisSize.min,
             children: [
+              _buildDetailRow('Student Code', student.studentCode),
               _buildDetailRow('Name', student.name),
-              _buildDetailRow('Email', student.email),
+              _buildDetailRow('Email', student.email ?? 'N/A'),
               _buildDetailRow('Grade', student.grade ?? 'N/A'),
               // _buildDetailRow('Section', student.section ?? 'N/A'), // Removed section detail
               _buildDetailRow('Phone', student.phoneNumber ?? 'N/A'),
@@ -499,24 +534,39 @@ class _StudentsScreenState extends State<StudentsScreen> {
             onPressed: () => Navigator.pop(context),
             child: Text('Cancel'),
           ),
-          ElevatedButton(
-            onPressed: () {
-              setState(() {
-                _allStudents.removeWhere((s) => s.id == student.id);
-                _filterStudents();
-              });
-              Navigator.pop(context);
-              
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text('Student deleted successfully!'),
-                  backgroundColor: Colors.red,
-                ),
-              );
-            },
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
-            child: Text('Delete'),
-          ),
+                       ElevatedButton(
+               onPressed: () async {
+                 Navigator.pop(context);
+                 
+                 try {
+                   // Call API to delete student
+                   await ApiService.deleteStudent(student.id);
+                   
+                   // Refresh data from API
+                   await _loadStudents();
+                   
+                   if (mounted) {
+                     ScaffoldMessenger.of(context).showSnackBar(
+                       SnackBar(
+                         content: Text('Student deleted successfully!'),
+                         backgroundColor: Colors.red,
+                       ),
+                     );
+                   }
+                 } catch (e) {
+                   if (mounted) {
+                     ScaffoldMessenger.of(context).showSnackBar(
+                       SnackBar(
+                         content: Text('Error deleting student: $e'),
+                         backgroundColor: Colors.red,
+                       ),
+                     );
+                   }
+                 }
+               },
+               style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+               child: Text('Delete'),
+             ),
         ],
       ),
     );

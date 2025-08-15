@@ -51,8 +51,9 @@ class Student(Base):
     __tablename__ = "students"
     
     id = Column(Integer, primary_key=True, index=True)
+    student_code = Column(String(20), unique=True, nullable=False, index=True)  # Mã student tự động
     full_name = Column(String, nullable=False, index=True)
-    email = Column(String, unique=True, nullable=False, index=True)
+    email = Column(String, nullable=True, index=True)  # Đổi thành nullable=True
     grade = Column(String, nullable=False, index=True)
     # section = Column(String, nullable=False, index=True) # Removed section field
     date_of_birth = Column(Date, nullable=True)

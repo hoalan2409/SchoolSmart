@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../models/student.dart';
 import '../models/attendance.dart';
+import '../services/api_service.dart';
 
 class AttendanceScreen extends StatefulWidget {
   const AttendanceScreen({Key? key}) : super(key: key);
@@ -19,44 +20,8 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
   final List<String> _grades = ['Grade 1', 'Grade 2', 'Grade 3', 'Grade 4', 'Grade 5', 'Grade 6', 'Grade 7', 'Grade 8', 'Grade 9', 'Grade 10', 'Grade 11', 'Grade 12'];
 
   
-  // Mock data - replace with actual data from database
-  List<Student> _students = [
-    Student(
-      id: 1,
-      name: 'Nguyễn Văn A',
-      email: 'nguyenvana@example.com',
-      grade: 'Grade 10',
-      createdAt: DateTime.now(),
-    ),
-    Student(
-      id: 2,
-      name: 'Trần Thị B',
-      email: 'tranthib@example.com',
-      grade: 'Grade 10',
-      createdAt: DateTime.now(),
-    ),
-    Student(
-      id: 3,
-      name: 'Lê Văn C',
-      email: 'levanc@example.com',
-      grade: 'Grade 10',
-      createdAt: DateTime.now(),
-    ),
-    Student(
-      id: 4,
-      name: 'Phạm Thị D',
-      email: 'phamthid@example.com',
-      grade: 'Grade 10',
-      createdAt: DateTime.now(),
-    ),
-    Student(
-      id: 5,
-      name: 'Hoàng Văn E',
-      email: 'hoangvane@example.com',
-      grade: 'Grade 10',
-      createdAt: DateTime.now(),
-    ),
-  ];
+  // Real data from API
+  List<Student> _students = [];
   
   final Map<int, bool> _attendanceMap = {};
   
@@ -64,7 +29,7 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
   void initState() {
     super.initState();
     _selectedGrade = _grades[9]; // Grade 10
-    _filterStudents();
+    _loadStudents();
   }
   
   void _initializeAttendance() {
@@ -74,10 +39,35 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
     }
   }
 
-  void _loadStudents() {
+  Future<void> _loadStudents() async {
     setState(() {
-      _filteredStudents = _students;
+      _isLoading = true;
+      _error = null;
     });
+
+    try {
+      final students = await ApiService.getStudents();
+      setState(() {
+        _students = students;
+        _filteredStudents = List.from(students);
+        _isLoading = false;
+      });
+      _initializeAttendance();
+    } catch (e) {
+      setState(() {
+        _error = e.toString();
+        _isLoading = false;
+      });
+      
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error loading students: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
   }
 
   void _filterStudents() {
@@ -213,7 +203,7 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
   }
   
   Widget _buildAttendanceSummary() {
-    int totalStudents = _students.length;
+    int totalStudents = _filteredStudents.length;
     int presentCount = _attendanceMap.values.where((isPresent) => isPresent).length;
     int absentCount = totalStudents - presentCount;
     double attendanceRate = totalStudents > 0 ? (presentCount / totalStudents) * 100 : 0;
@@ -293,6 +283,58 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
   }
   
   Widget _buildStudentsList() {
+    if (_isLoading) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            CircularProgressIndicator(),
+            SizedBox(height: 16),
+            Text(
+              'Loading students...',
+              style: TextStyle(
+                fontSize: 16,
+                color: Colors.grey[600],
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    if (_error != null) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.error_outline, size: 64, color: Colors.red[400]),
+            SizedBox(height: 16),
+            Text(
+              'Error loading students',
+              style: TextStyle(
+                fontSize: 18,
+                color: Colors.red[600],
+              ),
+            ),
+            Text(
+              _error!,
+              style: TextStyle(
+                fontSize: 14,
+                color: Colors.grey[500],
+              ),
+              textAlign: TextAlign.center,
+            ),
+            SizedBox(height: 16),
+            ElevatedButton.icon(
+              onPressed: _loadStudents,
+              icon: Icon(Icons.refresh),
+              label: Text('Retry'),
+            ),
+          ],
+        ),
+      );
+    }
+
     if (_filteredStudents.isEmpty) {
       return Center(
         child: Column(

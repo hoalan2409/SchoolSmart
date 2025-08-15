@@ -23,7 +23,7 @@ class ApiService {
   /// Upload student with multiple photos for ML face recognition
   static Future<Student> createStudentWithPhotos({
     required String name,
-    required String email,
+    String? email,  // Đổi thành optional
     required String grade,
     String? dateOfBirth,
     String? phone,
@@ -37,8 +37,8 @@ class ApiService {
       // Create FormData for multipart upload
       FormData formData = FormData.fromMap({
         'name': name,
-        'email': email,
         'grade': grade,
+        if (email != null && email.isNotEmpty) 'email': email,
         if (dateOfBirth != null) 'date_of_birth': dateOfBirth,
         if (phone != null) 'phone': phone,
         if (address != null) 'address': address,
@@ -79,6 +79,7 @@ class ApiService {
         Map<String, dynamic> data = response.data;
         return Student(
           id: data['id'],
+          studentCode: data['student_code'] ?? '',
           name: data['full_name'],
           email: data['email'],
           photoUrl: data['photo_path'],
@@ -177,6 +178,45 @@ class ApiService {
     try {
       Response response = await _dio.get(
         '/students/$studentId',
+        options: Options(
+          headers: {
+            // TODO: Add authentication token
+            // 'Authorization': 'Bearer $token',
+          },
+        ),
+      );
+      
+      if (response.statusCode == 200) {
+        Map<String, dynamic> data = response.data;
+        return Student.fromJson(data);
+      } else {
+        throw Exception('Failed to fetch student: ${response.statusCode}');
+      }
+      
+    } on DioException catch (e) {
+      if (e.response != null) {
+        String errorMessage = 'Server error: ${e.response?.statusCode}';
+        if (e.response?.data != null && e.response?.data['detail'] != null) {
+          errorMessage = e.response?.data['detail'];
+        }
+        throw Exception(errorMessage);
+      } else if (e.type == DioExceptionType.connectionTimeout ||
+                 e.type == DioExceptionType.receiveTimeout ||
+                 e.type == DioExceptionType.sendTimeout) {
+        throw Exception('Request timeout. Please check your connection.');
+      } else {
+        throw Exception('Request failed: ${e.message}');
+      }
+    } catch (e) {
+      throw Exception('Unexpected error: $e');
+    }
+  }
+  
+  /// Get student by student code
+  static Future<Student> getStudentByCode(String studentCode) async {
+    try {
+      Response response = await _dio.get(
+        '/students/code/$studentCode',
         options: Options(
           headers: {
             // TODO: Add authentication token

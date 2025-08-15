@@ -4,7 +4,7 @@ from datetime import date, datetime
 
 class StudentBase(BaseModel):
     full_name: str = Field(..., description="Student's full name")
-    email: EmailStr = Field(..., description="Student's email address")
+    email: Optional[EmailStr] = Field(None, description="Student's email address")  # Đổi thành optional
     grade: str = Field(..., description="Student's grade level")
     # section: str = Field(..., description="Student's section") # Removed section field
     date_of_birth: Optional[date] = Field(None, description="Student's date of birth")
@@ -33,6 +33,7 @@ class StudentUpdate(BaseModel):
 
 class StudentResponse(StudentBase):
     id: int
+    student_code: str  # Thêm student_code vào response
     created_at: datetime
     updated_at: Optional[datetime] = None
     

@@ -1,7 +1,8 @@
 class Student {
   final int id;
+  final String studentCode;  // Thêm student code
   final String name;
-  final String email;
+  final String? email;  // Đổi thành optional
   final String? photoUrl;
   final String grade;
   final DateTime? dateOfBirth;
@@ -14,8 +15,9 @@ class Student {
   
   Student({
     required this.id,
+    required this.studentCode,  // Thêm student code
     required this.name,
-    required this.email,
+    this.email,  // Đổi thành optional
     this.photoUrl,
     required this.grade,
     this.dateOfBirth,
@@ -30,8 +32,9 @@ class Student {
   factory Student.fromJson(Map<String, dynamic> json) {
     return Student(
       id: json['id'],
+      studentCode: json['student_code'] ?? '',  // Parse student code
       name: json['full_name'] ?? json['name'],
-      email: json['email'],
+      email: json['email'],  // Có thể null
       photoUrl: json['photo_path'] ?? json['photo_url'],
       grade: json['grade'],
       dateOfBirth: json['date_of_birth'] != null 
@@ -49,8 +52,9 @@ class Student {
   Map<String, dynamic> toJson() {
     return {
       'id': id,
+      'student_code': studentCode,  // Thêm student code
       'full_name': name,
-      'email': email,
+      'email': email,  // Có thể null
       'photo_path': photoUrl,
       'grade': grade,
       'date_of_birth': dateOfBirth?.toIso8601String(),
@@ -65,6 +69,7 @@ class Student {
   
   Student copyWith({
     int? id,
+    String? studentCode,  // Thêm student code
     String? name,
     String? email,
     String? photoUrl,
@@ -79,6 +84,7 @@ class Student {
   }) {
     return Student(
       id: id ?? this.id,
+      studentCode: studentCode ?? this.studentCode,  // Thêm student code
       name: name ?? this.name,
       email: email ?? this.email,
       photoUrl: photoUrl ?? this.photoUrl,
@@ -104,6 +110,6 @@ class Student {
   
   @override
   String toString() {
-    return 'Student(id: $id, name: $name, email: $email, grade: $grade)';
+    return 'Student(id: $id, studentCode: $studentCode, name: $name, email: $email, grade: $grade)';
   }
 }

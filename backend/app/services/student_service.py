@@ -13,20 +13,44 @@ class StudentService:
     def __init__(self):
         pass
     
+    def _generate_student_code(self, db: Session, grade: str) -> str:
+        """Generate unique student code based on grade"""
+        # Tìm số thứ tự lớn nhất trong grade hiện tại
+        max_student = db.query(StudentModel).filter(
+            StudentModel.grade == grade,
+            StudentModel.is_active == True
+        ).order_by(StudentModel.student_code.desc()).first()
+        
+        if max_student:
+            # Lấy số thứ tự từ mã hiện tại (ví dụ: "10A001" -> 1)
+            try:
+                current_number = int(max_student.student_code[-3:])
+                next_number = current_number + 1
+            except (ValueError, IndexError):
+                next_number = 1
+        else:
+            next_number = 1
+        
+        # Format: {GRADE}{SEQUENCE_NUMBER:03d} (ví dụ: "10A001", "11B002")
+        student_code = f"{grade}{next_number:03d}"
+        
+        # Kiểm tra xem mã có bị trùng không (để đảm bảo an toàn)
+        while db.query(StudentModel).filter(StudentModel.student_code == student_code).first():
+            next_number += 1
+            student_code = f"{grade}{next_number:03d}"
+        
+        return student_code
+    
     async def create_student(self, student_data: StudentCreate) -> StudentResponse:
         """Create a new student"""
         db = SessionLocal()
         try:
-            # Check if student with same email already exists
-            existing_student = db.query(StudentModel).filter(
-                StudentModel.email == student_data.email
-            ).first()
-            
-            if existing_student:
-                raise ValueError(f"Student with email '{student_data.email}' already exists")
+            # Generate unique student code
+            student_code = self._generate_student_code(db, student_data.grade)
             
             # Create new student
             db_student = StudentModel(
+                student_code=student_code,
                 full_name=student_data.full_name,
                 email=student_data.email,
                 grade=student_data.grade,
@@ -46,6 +70,7 @@ class StudentService:
             
             return StudentResponse(
                 id=db_student.id,
+                student_code=db_student.student_code,
                 full_name=db_student.full_name,
                 email=db_student.email,
                 grade=db_student.grade,
@@ -72,8 +97,7 @@ class StudentService:
         self, 
         skip: int = 0, 
         limit: int = 100,
-        grade: Optional[str] = None,
-        # section: Optional[str] = None, # Removed section parameter
+        grade: Optional[str] = None
     ) -> List[StudentResponse]:
         """Get list of students with pagination and filtering"""
         db = SessionLocal()
@@ -91,6 +115,7 @@ class StudentService:
             return [
                 StudentResponse(
                     id=student.id,
+                    student_code=student.student_code,
                     full_name=student.full_name,
                     email=student.email,
                     grade=student.grade,
@@ -125,6 +150,7 @@ class StudentService:
             
             return StudentResponse(
                 id=student.id,
+                student_code=student.student_code,
                 full_name=student.full_name,
                 email=student.email,
                 grade=student.grade,
@@ -160,15 +186,6 @@ class StudentService:
                 student.full_name = student_data.full_name
             
             if student_data.email is not None:
-                # Check if new email conflicts with existing student
-                if student_data.email != student.email:
-                    existing_student = db.query(StudentModel).filter(
-                        StudentModel.email == student_data.email
-                    ).first()
-                    
-                    if existing_student:
-                        raise ValueError(f"Student with email '{student_data.email}' already exists")
-                
                 student.email = student_data.email
             
             if student_data.grade is not None:
@@ -262,6 +279,7 @@ class StudentService:
             
             return StudentResponse(
                 id=student.id,
+                student_code=student.student_code,
                 full_name=student.full_name,
                 email=student.email,
                 grade=student.grade,
@@ -296,10 +314,10 @@ class StudentService:
             return [
                 StudentResponse(
                     id=student.id,
+                    student_code=student.student_code,
                     full_name=student.full_name,
                     email=student.email,
                     grade=student.grade,
-                    # section=student.section, # Removed section
                     date_of_birth=student.date_of_birth,
                     phone=student.phone,
                     address=student.address,
@@ -319,6 +337,39 @@ class StudentService:
         finally:
             db.close()
     
+    async def get_student_by_code(self, student_code: str) -> Optional[StudentResponse]:
+        """Get student by student code"""
+        db = SessionLocal()
+        try:
+            student = db.query(StudentModel).filter(StudentModel.student_code == student_code).first()
+            
+            if not student:
+                return None
+            
+            return StudentResponse(
+                id=student.id,
+                student_code=student.student_code,
+                full_name=student.full_name,
+                email=student.email,
+                grade=student.grade,
+                # section=student.section, # Removed section
+                date_of_birth=student.date_of_birth,
+                phone=student.phone,
+                address=student.address,
+                parent_name=student.parent_name,
+                parent_phone=student.parent_phone,
+                parent_email=student.parent_email,
+                photo_path=student.photo_path,
+                created_at=student.created_at,
+                updated_at=student.updated_at,
+            )
+            
+        except Exception as e:
+            logger.error(f"Error fetching student by code '{student_code}': {e}")
+            raise
+        finally:
+            db.close()
+
     async def get_active_students_count(self) -> int:
         """Get count of active students"""
         db = SessionLocal()
