@@ -3,8 +3,10 @@ import 'package:provider/provider.dart';
 
 import '../providers/auth_provider.dart';
 import '../constants/app_constants.dart';
+import '../l10n/app_localizations.dart';
 import 'students_screen.dart';
 import 'attendance_screen.dart';
+import 'settings_screen.dart';
 
 
 class HomeScreen extends StatefulWidget {
@@ -32,11 +34,24 @@ class _HomeScreenState extends State<HomeScreen> {
     
     return Scaffold(
       appBar: AppBar(
-        title: Text(AppConstants.appName),
+        title: Text(AppLocalizations.of(context)!.appTitle),
         actions: [
+          // Settings button
+          IconButton(
+            icon: Icon(Icons.settings),
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => SettingsScreen()),
+              );
+            },
+            tooltip: AppLocalizations.of(context)!.settings,
+          ),
+          // Logout button
           IconButton(
             icon: Icon(Icons.logout),
             onPressed: () => _showLogoutDialog(),
+            tooltip: AppLocalizations.of(context)!.logout,
           ),
         ],
       ),
@@ -53,11 +68,11 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
                 NavigationRailDestination(
                   icon: Icon(Icons.people),
-                  label: Text('Students'),
+                  label: Text(AppLocalizations.of(context)!.studentsManagement),
                 ),
                 NavigationRailDestination(
                   icon: Icon(Icons.check_circle),
-                  label: Text('Attendance'),
+                  label: Text(AppLocalizations.of(context)!.attendanceManagement),
                 ),
                 NavigationRailDestination(
                   icon: Icon(Icons.analytics),
@@ -65,7 +80,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
                 NavigationRailDestination(
                   icon: Icon(Icons.person),
-                  label: Text('Profile'),
+                  label: Text(AppLocalizations.of(context)!.profile),
                 ),
               ],
               selectedIndex: _selectedIndex,
@@ -99,11 +114,11 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
                 BottomNavigationBarItem(
                   icon: Icon(Icons.people),
-                  label: 'Students',
+                  label: AppLocalizations.of(context)!.studentsManagement,
                 ),
                 BottomNavigationBarItem(
                   icon: Icon(Icons.check_circle),
-                  label: 'Attendance',
+                  label: AppLocalizations.of(context)!.attendanceManagement,
                 ),
                 BottomNavigationBarItem(
                   icon: Icon(Icons.analytics),
@@ -111,7 +126,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
                 BottomNavigationBarItem(
                   icon: Icon(Icons.person),
-                  label: 'Profile',
+                  label: AppLocalizations.of(context)!.profile,
                 ),
               ],
             )

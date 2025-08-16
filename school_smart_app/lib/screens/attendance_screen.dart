@@ -3,6 +3,7 @@ import '../models/student.dart';
 import '../models/attendance.dart';
 import '../models/grade.dart'; // Add Grade model import
 import '../services/api_service.dart';
+import '../l10n/app_localizations.dart';
 
 class AttendanceScreen extends StatefulWidget {
   const AttendanceScreen({Key? key}) : super(key: key);
@@ -124,19 +125,12 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Attendance Management'),
-        actions: [
-          IconButton(
-            icon: Icon(Icons.save),
-            onPressed: _saveAttendance,
-            tooltip: 'Save Attendance',
-          ),
-        ],
+        title: Text(AppLocalizations.of(context)!.attendanceManagement),
       ),
       body: Column(
         children: [
-          // Filters and Date Selection
-          _buildFiltersSection(),
+          // Filters
+          _buildFilters(),
           
           // Attendance Summary
           _buildAttendanceSummary(),
@@ -150,160 +144,153 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
     );
   }
   
-  Widget _buildFiltersSection() {
+  Widget _buildFilters() {
     return Container(
       padding: EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: Colors.grey[50],
         border: Border(bottom: BorderSide(color: Colors.grey[300]!)),
       ),
-      child: Column(
+      child: Row(
         children: [
-          // Date Selection
-          Row(
-            children: [
-              Icon(Icons.calendar_today, color: Colors.grey[600]),
-              SizedBox(width: 8),
-              Text(
-                'Date: ',
-                style: TextStyle(fontWeight: FontWeight.bold),
+          Expanded(
+            child: DropdownButtonFormField<String>(
+              value: _selectedGrade,
+              decoration: InputDecoration(
+                labelText: AppLocalizations.of(context)!.grade,
+                border: OutlineInputBorder(),
+                contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
               ),
-              InkWell(
-                onTap: _selectDate,
-                child: Container(
-                  padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                  decoration: BoxDecoration(
-                    border: Border.all(color: Colors.grey[400]!),
-                    borderRadius: BorderRadius.circular(4),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(
-                        '${_selectedDate.day}/${_selectedDate.month}/${_selectedDate.year}',
-                        style: TextStyle(fontWeight: FontWeight.w500),
-                      ),
-                      SizedBox(width: 8),
-                      Icon(Icons.arrow_drop_down, size: 20),
-                    ],
-                  ),
+              items: _availableGrades.map((Grade grade) {
+                return DropdownMenuItem<String>(
+                  value: grade.name,
+                  child: Text(grade.name),
+                );
+              }).toList(),
+              onChanged: _onGradeChanged,
+            ),
+          ),
+          SizedBox(width: 16),
+          Expanded(
+            child: InkWell(
+              onTap: () async {
+                final date = await showDatePicker(
+                  context: context,
+                  initialDate: _selectedDate,
+                  firstDate: DateTime(2020),
+                  lastDate: DateTime(2030),
+                );
+                if (date != null) {
+                  _onDateChanged(date);
+                }
+              },
+              child: InputDecorator(
+                decoration: InputDecoration(
+                  labelText: AppLocalizations.of(context)!.selectDate,
+                  border: OutlineInputBorder(),
+                  contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                ),
+                child: Text(
+                  '${_selectedDate.day}/${_selectedDate.month}/${_selectedDate.year}',
+                  style: TextStyle(fontSize: 16),
                 ),
               ),
-            ],
-          ),
-          
-          SizedBox(height: 16),
-          
-          // Grade and Section Filters
-          Row(
-            children: [
-              Expanded(
-                child: _buildGradeFilter(),
-              ),
-              SizedBox(width: 16),
-              // Removed Section Dropdown - section field no longer exists
-            ],
+            ),
           ),
         ],
       ),
-    );
-  }
-  
-  Widget _buildGradeFilter() {
-    return DropdownButtonFormField<String>(
-      value: _selectedGrade,
-      decoration: InputDecoration(
-        labelText: 'Grade',
-        border: OutlineInputBorder(),
-        contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-      ),
-      items: _availableGrades.map((Grade grade) {
-        return DropdownMenuItem<String>(
-          value: grade.name,
-          child: Text(grade.name),
-        );
-      }).toList(),
-      onChanged: _onGradeChanged,
     );
   }
   
   Widget _buildAttendanceSummary() {
-    int totalStudents = _filteredStudents.length;
-    int presentCount = _attendanceMap.values.where((isPresent) => isPresent).length;
-    int absentCount = totalStudents - presentCount;
-    double attendanceRate = totalStudents > 0 ? (presentCount / totalStudents) * 100 : 0;
+    final totalStudents = _filteredStudents.length;
+    final presentCount = _attendanceMap.values.where((isPresent) => isPresent).length;
+    final absentCount = totalStudents - presentCount;
+    final attendanceRate = totalStudents > 0 ? (presentCount / totalStudents * 100).toStringAsFixed(1) : '0.0';
     
     return Container(
       padding: EdgeInsets.all(16),
-      child: Row(
+      margin: EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.blue[50],
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: Colors.blue[200]!),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Expanded(
-            child: _buildSummaryCard(
-              'Total',
-              totalStudents.toString(),
-              Icons.people,
-              Colors.blue,
+          Text(
+            AppLocalizations.of(context)!.attendanceSummary,
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+              color: Colors.blue[800],
             ),
           ),
-          SizedBox(width: 16),
-          Expanded(
-            child: _buildSummaryCard(
-              'Present',
-              presentCount.toString(),
-              Icons.check_circle,
-              Colors.green,
-            ),
-          ),
-          SizedBox(width: 16),
-          Expanded(
-            child: _buildSummaryCard(
-              'Absent',
-              absentCount.toString(),
-              Icons.cancel,
-              Colors.red,
-            ),
-          ),
-          SizedBox(width: 16),
-          Expanded(
-            child: _buildSummaryCard(
-              'Rate',
-              '${attendanceRate.toStringAsFixed(1)}%',
-              Icons.trending_up,
-              Colors.orange,
-            ),
+          SizedBox(height: 16),
+          Row(
+            children: [
+              Expanded(
+                child: _buildSummaryItem(
+                  AppLocalizations.of(context)!.totalStudents,
+                  totalStudents.toString(),
+                  Icons.people,
+                  Colors.blue,
+                ),
+              ),
+              Expanded(
+                child: _buildSummaryItem(
+                  AppLocalizations.of(context)!.presentCount,
+                  presentCount.toString(),
+                  Icons.check_circle,
+                  Colors.green,
+                ),
+              ),
+              Expanded(
+                child: _buildSummaryItem(
+                  AppLocalizations.of(context)!.absentCount,
+                  absentCount.toString(),
+                  Icons.cancel,
+                  Colors.red,
+                ),
+              ),
+              Expanded(
+                child: _buildSummaryItem(
+                  AppLocalizations.of(context)!.attendanceRate,
+                  '$attendanceRate%',
+                  Icons.trending_up,
+                  Colors.orange,
+                ),
+              ),
+            ],
           ),
         ],
       ),
     );
   }
   
-  Widget _buildSummaryCard(String title, String value, IconData icon, Color color) {
-    return Card(
-      elevation: 2,
-      child: Padding(
-        padding: EdgeInsets.all(12),
-        child: Column(
-          children: [
-            Icon(icon, size: 24, color: color),
-            SizedBox(height: 4),
-            Text(
-              value,
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-                color: color,
-              ),
-            ),
-            Text(
-              title,
-              style: TextStyle(
-                fontSize: 12,
-                color: Colors.grey[600],
-              ),
-            ),
-          ],
+  Widget _buildSummaryItem(String label, String value, IconData icon, Color color) {
+    return Column(
+      children: [
+        Icon(icon, color: color, size: 32),
+        SizedBox(height: 8),
+        Text(
+          value,
+          style: TextStyle(
+            fontSize: 24,
+            fontWeight: FontWeight.bold,
+            color: color,
+          ),
         ),
-      ),
+        Text(
+          label,
+          style: TextStyle(
+            fontSize: 12,
+            color: Colors.grey[600],
+          ),
+          textAlign: TextAlign.center,
+        ),
+      ],
     );
   }
   
@@ -316,7 +303,7 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
             CircularProgressIndicator(),
             SizedBox(height: 16),
             Text(
-              'Loading students...',
+              AppLocalizations.of(context)!.loadingStudents,
               style: TextStyle(
                 fontSize: 16,
                 color: Colors.grey[600],
@@ -335,7 +322,7 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
             Icon(Icons.error_outline, size: 64, color: Colors.red[400]),
             SizedBox(height: 16),
             Text(
-              'Error loading students',
+              AppLocalizations.of(context)!.errorLoadingStudents,
               style: TextStyle(
                 fontSize: 18,
                 color: Colors.red[600],
@@ -353,7 +340,7 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
             ElevatedButton.icon(
               onPressed: _loadStudents,
               icon: Icon(Icons.refresh),
-              label: Text('Retry'),
+              label: Text(AppLocalizations.of(context)!.retry),
             ),
           ],
         ),
@@ -368,14 +355,14 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
             Icon(Icons.people_outline, size: 64, color: Colors.grey[400]),
             SizedBox(height: 16),
             Text(
-              'No students found',
+              AppLocalizations.of(context)!.noStudentsFound,
               style: TextStyle(
                 fontSize: 18,
                 color: Colors.grey[600],
               ),
             ),
             Text(
-              'Please select a different grade or section',
+              AppLocalizations.of(context)!.tryAdjustingSearch,
               style: TextStyle(
                 fontSize: 14,
                 color: Colors.grey[500],
@@ -397,10 +384,13 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
           margin: EdgeInsets.only(bottom: 8),
           child: ListTile(
             leading: CircleAvatar(
-              backgroundColor: isPresent ? Colors.green[100] : Colors.red[100],
-              child: Icon(
-                isPresent ? Icons.person : Icons.person_off,
-                color: isPresent ? Colors.green[600] : Colors.red[600],
+              backgroundColor: Theme.of(context).primaryColor.withOpacity(0.1),
+              child: Text(
+                student.name.split(' ').last[0].toUpperCase(),
+                style: TextStyle(
+                  color: Theme.of(context).primaryColor,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
             ),
             title: Text(
@@ -414,43 +404,24 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
             trailing: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                // Present Button
-                InkWell(
-                  onTap: () => _toggleAttendance(student.id, true),
-                  child: Container(
-                    padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                    decoration: BoxDecoration(
-                      color: isPresent ? Colors.green : Colors.grey[200],
-                      borderRadius: BorderRadius.circular(16),
-                    ),
-                    child: Text(
-                      'Present',
-                      style: TextStyle(
-                        color: isPresent ? Colors.white : Colors.grey[600],
-                        fontSize: 12,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                  ),
+                // Present/Absent Toggle
+                Switch(
+                  value: isPresent,
+                  onChanged: (value) {
+                    setState(() {
+                      _attendanceMap[student.id] = value;
+                    });
+                  },
+                  activeColor: Colors.green,
                 ),
                 SizedBox(width: 8),
-                // Absent Button
-                InkWell(
-                  onTap: () => _toggleAttendance(student.id, false),
-                  child: Container(
-                    padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                    decoration: BoxDecoration(
-                      color: !isPresent ? Colors.red : Colors.grey[200],
-                      borderRadius: BorderRadius.circular(16),
-                    ),
-                    child: Text(
-                      'Absent',
-                      style: TextStyle(
-                        color: !isPresent ? Colors.white : Colors.grey[600],
-                        fontSize: 12,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
+                Text(
+                  isPresent 
+                    ? AppLocalizations.of(context)!.present
+                    : AppLocalizations.of(context)!.absent,
+                  style: TextStyle(
+                    color: isPresent ? Colors.green : Colors.red,
+                    fontWeight: FontWeight.w500,
                   ),
                 ),
               ],
@@ -459,67 +430,5 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
         );
       },
     );
-  }
-  
-  void _toggleAttendance(int studentId, bool isPresent) {
-    setState(() {
-      _attendanceMap[studentId] = isPresent;
-    });
-  }
-  
-  Future<void> _selectDate() async {
-    final DateTime? picked = await showDatePicker(
-      context: context,
-      initialDate: _selectedDate,
-      firstDate: DateTime.now().subtract(Duration(days: 365)),
-      lastDate: DateTime.now().add(Duration(days: 365)),
-    );
-    if (picked != null && picked != _selectedDate) {
-      setState(() {
-        _selectedDate = picked;
-      });
-      // TODO: Load attendance data for selected date
-    }
-  }
-  
-  void _saveAttendance() {
-    setState(() {
-      _isLoading = true;
-    });
-    
-    // Simulate API call
-    Future.delayed(Duration(seconds: 2), () {
-      setState(() {
-        _isLoading = false;
-      });
-      
-      // Create attendance records
-      List<Attendance> attendanceRecords = [];
-      for (var student in _students) {
-        final isPresent = _attendanceMap[student.id] ?? true;
-        attendanceRecords.add(Attendance(
-          id: DateTime.now().millisecondsSinceEpoch + student.id,
-          studentId: student.id,
-          studentName: student.name,
-          timestamp: _selectedDate,
-          isPresent: isPresent,
-          markedBy: 'Teacher', // TODO: Get from auth
-          location: 'Classroom',
-          createdAt: DateTime.now(),
-        ));
-      }
-      
-      // TODO: Save to database/API
-      print('Saving ${attendanceRecords.length} attendance records');
-      
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Attendance saved successfully!'),
-            backgroundColor: Colors.green,
-          ),
-        );
-      }
-    });
   }
 }

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../models/student.dart';
 import '../models/grade.dart'; // Add Grade model import
 import '../services/api_service.dart';
+import '../l10n/app_localizations.dart';
 import 'add_student_screen.dart';
 
 class StudentsScreen extends StatefulWidget {
@@ -69,12 +70,12 @@ class _StudentsScreenState extends State<StudentsScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Students Management'),
+        title: Text(AppLocalizations.of(context)!.studentsManagement),
         actions: [
           IconButton(
             icon: Icon(Icons.add),
             onPressed: _addNewStudent,
-            tooltip: 'Add New Student',
+            tooltip: AppLocalizations.of(context)!.addNewStudent,
           ),
         ],
       ),
@@ -95,7 +96,7 @@ class _StudentsScreenState extends State<StudentsScreen> {
       floatingActionButton: FloatingActionButton(
         onPressed: _addNewStudent,
         child: Icon(Icons.add),
-        tooltip: 'Add New Student',
+        tooltip: AppLocalizations.of(context)!.addNewStudent,
       ),
     );
   }
@@ -113,7 +114,7 @@ class _StudentsScreenState extends State<StudentsScreen> {
           TextField(
             controller: _searchController,
             decoration: InputDecoration(
-              hintText: 'Search students by name or email...',
+              hintText: AppLocalizations.of(context)!.searchStudents,
               prefixIcon: Icon(Icons.search),
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(8),
@@ -138,7 +139,7 @@ class _StudentsScreenState extends State<StudentsScreen> {
                 child: DropdownButtonFormField<String>(
                   value: _selectedGrade,
                   decoration: InputDecoration(
-                    labelText: 'Grade',
+                    labelText: AppLocalizations.of(context)!.grade,
                     border: OutlineInputBorder(),
                     contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                   ),
@@ -146,7 +147,7 @@ class _StudentsScreenState extends State<StudentsScreen> {
                     // Add "All Grades" option
                     DropdownMenuItem<String>(
                       value: null,
-                      child: Text('All Grades'),
+                      child: Text(AppLocalizations.of(context)!.allGrades),
                     ),
                     // Add grades from database
                     ..._availableGrades.map((Grade grade) {
@@ -165,7 +166,6 @@ class _StudentsScreenState extends State<StudentsScreen> {
                 ),
               ),
               SizedBox(width: 16),
-              // Removed Section Dropdown
             ],
           ),
         ],
@@ -181,7 +181,7 @@ class _StudentsScreenState extends State<StudentsScreen> {
           Icon(Icons.people, color: Colors.grey[600], size: 20),
           SizedBox(width: 8),
           Text(
-            '${_filteredStudents.length} students found',
+            '${_filteredStudents.length} ${AppLocalizations.of(context)!.studentsFound}',
             style: TextStyle(
               color: Colors.grey[600],
               fontWeight: FontWeight.w500,
@@ -191,7 +191,7 @@ class _StudentsScreenState extends State<StudentsScreen> {
                      TextButton.icon(
              onPressed: _loadStudents,
              icon: Icon(Icons.refresh, size: 16),
-             label: Text('Refresh'),
+             label: Text(AppLocalizations.of(context)!.refresh),
              style: TextButton.styleFrom(
                foregroundColor: Theme.of(context).primaryColor,
              ),
@@ -210,7 +210,7 @@ class _StudentsScreenState extends State<StudentsScreen> {
             CircularProgressIndicator(),
             SizedBox(height: 16),
             Text(
-              'Loading students...',
+              AppLocalizations.of(context)!.loadingStudents,
               style: TextStyle(
                 fontSize: 16,
                 color: Colors.grey[600],
@@ -229,7 +229,7 @@ class _StudentsScreenState extends State<StudentsScreen> {
             Icon(Icons.error_outline, size: 64, color: Colors.red[400]),
             SizedBox(height: 16),
             Text(
-              'Error loading students',
+              AppLocalizations.of(context)!.errorLoadingStudents,
               style: TextStyle(
                 fontSize: 18,
                 color: Colors.red[600],
@@ -247,7 +247,7 @@ class _StudentsScreenState extends State<StudentsScreen> {
             ElevatedButton.icon(
               onPressed: _loadStudents,
               icon: Icon(Icons.refresh),
-              label: Text('Retry'),
+              label: Text(AppLocalizations.of(context)!.retry),
             ),
           ],
         ),
@@ -262,14 +262,14 @@ class _StudentsScreenState extends State<StudentsScreen> {
             Icon(Icons.people_outline, size: 64, color: Colors.grey[400]),
             SizedBox(height: 16),
             Text(
-              'No students found',
+              AppLocalizations.of(context)!.noStudentsFound,
               style: TextStyle(
                 fontSize: 18,
                 color: Colors.grey[600],
               ),
             ),
             Text(
-              'Try adjusting your search or filters',
+              AppLocalizations.of(context)!.tryAdjustingSearch,
               style: TextStyle(
                 fontSize: 14,
                 color: Colors.grey[500],
@@ -279,7 +279,7 @@ class _StudentsScreenState extends State<StudentsScreen> {
             ElevatedButton.icon(
               onPressed: _addNewStudent,
               icon: Icon(Icons.add),
-              label: Text('Add First Student'),
+              label: Text(AppLocalizations.of(context)!.addFirstStudent),
             ),
           ],
         ),
@@ -336,7 +336,7 @@ class _StudentsScreenState extends State<StudentsScreen> {
                     children: [
                       Icon(Icons.edit, size: 18),
                       SizedBox(width: 8),
-                      Text('Edit'),
+                      Text(AppLocalizations.of(context)!.edit),
                     ],
                   ),
                 ),
@@ -346,7 +346,7 @@ class _StudentsScreenState extends State<StudentsScreen> {
                     children: [
                       Icon(Icons.visibility, size: 18),
                       SizedBox(width: 8),
-                      Text('View Details'),
+                      Text(AppLocalizations.of(context)!.viewDetails),
                     ],
                   ),
                 ),
@@ -356,7 +356,7 @@ class _StudentsScreenState extends State<StudentsScreen> {
                     children: [
                       Icon(Icons.check_circle, size: 18),
                       SizedBox(width: 8),
-                      Text('View Attendance'),
+                      Text(AppLocalizations.of(context)!.viewAttendance),
                     ],
                   ),
                 ),
@@ -366,7 +366,7 @@ class _StudentsScreenState extends State<StudentsScreen> {
                     children: [
                       Icon(Icons.delete, size: 18, color: Colors.red),
                       SizedBox(width: 8),
-                      Text('Delete', style: TextStyle(color: Colors.red)),
+                      Text(AppLocalizations.of(context)!.delete, style: TextStyle(color: Colors.red)),
                     ],
                   ),
                 ),
@@ -466,41 +466,41 @@ class _StudentsScreenState extends State<StudentsScreen> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text('Student Details'),
+        title: Text(AppLocalizations.of(context)!.studentDetails),
         content: SingleChildScrollView(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisSize: MainAxisSize.min,
             children: [
-              _buildDetailRow('Student Code', student.studentCode),
-              _buildDetailRow('Name', student.name),
-              _buildDetailRow('Email', student.email ?? 'N/A'),
-              _buildDetailRow('Grade', student.grade ?? 'N/A'),
+              _buildDetailRow(AppLocalizations.of(context)!.studentCode, student.studentCode),
+              _buildDetailRow(AppLocalizations.of(context)!.name, student.name),
+              _buildDetailRow(AppLocalizations.of(context)!.email, student.email ?? 'N/A'),
+              _buildDetailRow(AppLocalizations.of(context)!.grade, student.grade ?? 'N/A'),
               // _buildDetailRow('Section', student.section ?? 'N/A'), // Removed section detail
-              _buildDetailRow('Phone', student.phoneNumber ?? 'N/A'),
-              _buildDetailRow('Address', student.address ?? 'N/A'),
-              _buildDetailRow('Date of Birth', student.dateOfBirth != null 
+              _buildDetailRow(AppLocalizations.of(context)!.phone, student.phoneNumber ?? 'N/A'),
+              _buildDetailRow(AppLocalizations.of(context)!.address, student.address ?? 'N/A'),
+              _buildDetailRow(AppLocalizations.of(context)!.dateOfBirth, student.dateOfBirth != null 
                   ? '${student.dateOfBirth!.day}/${student.dateOfBirth!.month}/${student.dateOfBirth!.year}'
                   : 'N/A'),
-              _buildDetailRow('Parent Name', student.parentName ?? 'N/A'),
-              _buildDetailRow('Parent Phone', student.parentPhone ?? 'N/A'),
-              _buildDetailRow('Parent Email', student.parentEmail ?? 'N/A'),
+              _buildDetailRow(AppLocalizations.of(context)!.parentName, student.parentName ?? 'N/A'),
+              _buildDetailRow(AppLocalizations.of(context)!.parentPhone, student.parentPhone ?? 'N/A'),
+              _buildDetailRow(AppLocalizations.of(context)!.parentEmail, student.parentEmail ?? 'N/A'),
               // _buildDetailRow('Status', student.isActive ? 'Active' : 'Inactive'), // Removed isActive reference
-              _buildDetailRow('Created', student.createdAt.toString().split(' ')[0]),
+              _buildDetailRow(AppLocalizations.of(context)!.createdAt, student.createdAt.toString().split(' ')[0]),
             ],
           ),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: Text('Close'),
+            child: Text(AppLocalizations.of(context)!.close),
           ),
           ElevatedButton(
             onPressed: () {
               Navigator.pop(context);
               // TODO: Navigate to edit screen
             },
-            child: Text('Edit'),
+            child: Text(AppLocalizations.of(context)!.edit),
           ),
         ],
       ),
@@ -539,7 +539,7 @@ class _StudentsScreenState extends State<StudentsScreen> {
       case 'edit':
         // TODO: Navigate to edit screen
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Edit functionality coming soon!')),
+          SnackBar(content: Text(AppLocalizations.of(context)!.editFunctionalityComingSoon)),
         );
         break;
       case 'view':
@@ -548,7 +548,7 @@ class _StudentsScreenState extends State<StudentsScreen> {
       case 'attendance':
         // TODO: Navigate to attendance screen for this student
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Attendance view coming soon!')),
+          SnackBar(content: Text(AppLocalizations.of(context)!.attendanceViewComingSoon)),
         );
         break;
       case 'delete':
@@ -561,12 +561,12 @@ class _StudentsScreenState extends State<StudentsScreen> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text('Delete Student'),
-        content: Text('Are you sure you want to delete ${student.name}? This action cannot be undone.'),
+        title: Text(AppLocalizations.of(context)!.deleteStudent),
+        content: Text(AppLocalizations.of(context)!.areYouSureYouWantToDeleteStudent(student.name)),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: Text('Cancel'),
+            child: Text(AppLocalizations.of(context)!.cancel),
           ),
                        ElevatedButton(
                onPressed: () async {
@@ -582,7 +582,7 @@ class _StudentsScreenState extends State<StudentsScreen> {
                    if (mounted) {
                      ScaffoldMessenger.of(context).showSnackBar(
                        SnackBar(
-                         content: Text('Student deleted successfully!'),
+                         content: Text(AppLocalizations.of(context)!.studentDeletedSuccessfully),
                          backgroundColor: Colors.red,
                        ),
                      );
@@ -591,7 +591,7 @@ class _StudentsScreenState extends State<StudentsScreen> {
                    if (mounted) {
                      ScaffoldMessenger.of(context).showSnackBar(
                        SnackBar(
-                         content: Text('Error deleting student: $e'),
+                         content: Text(AppLocalizations.of(context)!.errorDeletingStudent(e.toString())),
                          backgroundColor: Colors.red,
                        ),
                      );
@@ -599,7 +599,7 @@ class _StudentsScreenState extends State<StudentsScreen> {
                  }
                },
                style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
-               child: Text('Delete'),
+               child: Text(AppLocalizations.of(context)!.delete),
              ),
         ],
       ),
